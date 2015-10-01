@@ -10,16 +10,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import trabRedes.Host;
 import trabRedes.Packet;
-import trabRedes.routing.RoutingTable;
 
 /**
  *
@@ -32,8 +32,9 @@ public class Server extends DatagramSocket implements Runnable {
     
     Thread serverThread, senderThread;
     boolean isStarted = false;
+    boolean isRouter = false;
     
-    public final RoutingTable table = new RoutingTable();
+    private Host gateway;
 
     public Server(int port) throws SocketException, UnknownHostException {
         super(port, InetAddress.getLocalHost());
@@ -59,6 +60,18 @@ public class Server extends DatagramSocket implements Runnable {
 
     public void setListener(ServerListener listener) {
         this.listener = listener;
+    }
+
+    public Host getGateway() {
+        return gateway;
+    }
+
+    public void setGateway(Host gateway) {
+        this.gateway = gateway;
+    }
+
+    public void setIsRouter(boolean isRouter) {
+        this.isRouter = isRouter;
     }
 
     /**
@@ -116,8 +129,16 @@ public class Server extends DatagramSocket implements Runnable {
         outStream.close();
         byteOutput.close();
         
-        InetAddress serverAddress = data.getDestination();
+        InetAddress serverAddress;
         int port = data.getDestinationPort();
+        if(data.getDestination().equals(getLocalAddress()) || isRouter) {
+            serverAddress = data.getDestination();
+        } else if (gateway != null) {
+            serverAddress = gateway.getAddress();
+            port = gateway.getPort();
+        } else {
+            throw new NoRouteToHostException();
+        }
 
         byte[] out = byteOutput.toByteArray();
         DatagramPacket packet = new DatagramPacket(out, out.length, serverAddress, port);

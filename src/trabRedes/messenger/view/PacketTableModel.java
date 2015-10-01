@@ -15,7 +15,7 @@ import trabRedes.Packet;
  */
 public class PacketTableModel extends AbstractTableModel {
     
-    List<Packet> dataSet;
+    protected List<Packet> dataSet;
 
     public PacketTableModel(List<Packet> dataSet) {
         this.dataSet = dataSet;

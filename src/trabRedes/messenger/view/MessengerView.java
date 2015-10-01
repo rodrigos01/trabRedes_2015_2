@@ -6,12 +6,16 @@
 package trabRedes.messenger.view;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import trabRedes.Host;
 import trabRedes.Packet;
 import trabRedes.socket.Server;
 
@@ -22,7 +26,6 @@ import trabRedes.socket.Server;
 public class MessengerView extends javax.swing.JFrame implements Server.ServerListener {
 
     Server server;
-    List<Packet> received;
     
     /**
      * Creates new form MessengerView
@@ -42,8 +45,7 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
             Logger.getLogger(MessengerView.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        received = new ArrayList<>();
-        jTable1.setModel(new PacketTableModel(received));
+        jTable1.setModel(new PacketTableModel(new ArrayList<>()));
     }
 
     /**
@@ -72,6 +74,8 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
         lblLocalAddress = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         lblLocalPort = new javax.swing.JLabel();
+        jLabel7 = new javax.swing.JLabel();
+        lblGw = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -154,7 +158,17 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
 
         jLabel5.setText("IP Local:");
 
-        jLabel6.setText("Porta");
+        jLabel6.setText("Porta:");
+
+        jLabel7.setText("Gateway:");
+
+        lblGw.setForeground(new java.awt.Color(255, 0, 51));
+        lblGw.setText("Clique para definir");
+        lblGw.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblGwMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -164,11 +178,15 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
                 .addContainerGap()
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblLocalAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblLocalAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel6)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblLocalPort, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblGw)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
@@ -176,6 +194,9 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel7)
+                        .addComponent(lblGw))
                     .addComponent(jLabel6)
                     .addComponent(lblLocalPort, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblLocalAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -218,24 +239,12 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSendActionPerformed
-        String ip = edtIp.getText();
-        int port = Integer.parseInt(edtPort.getText());
-        String message = txtMsg.getText();
-        
-        Packet packet = new Packet();
-        packet.setSource(server.getLocalAddress());
-        packet.setSourcePort(server.getLocalPort());
-        
-        try {
-            packet.setDestination(ip);
-            packet.setDestinationPort(port);
-            packet.setMessage(message);        
-            server.send(packet);
-        } catch (IOException ex) {
-            System.out.println("Erro ao enviar mensagem: "+ex.getMessage());
-        }
-        
+        sendMessage();
     }//GEN-LAST:event_btnSendActionPerformed
+
+    private void lblGwMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblGwMouseClicked
+        changeGateway();
+    }//GEN-LAST:event_lblGwMouseClicked
 
     /**
      * @param args the command line arguments
@@ -282,11 +291,13 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
+    private javax.swing.JLabel lblGw;
     private javax.swing.JLabel lblLocalAddress;
     private javax.swing.JLabel lblLocalPort;
     private javax.swing.JTextArea txtMsg;
@@ -297,6 +308,44 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
         
         PacketTableModel model = (PacketTableModel) jTable1.getModel();
         model.add(packet);        
+        
+    }
+    
+    private void sendMessage() {
+        String ip = edtIp.getText();
+        int port = Integer.parseInt(edtPort.getText());
+        String message = txtMsg.getText();
+        
+        Packet packet = new Packet();
+        packet.setSource(server.getLocalAddress());
+        packet.setSourcePort(server.getLocalPort());
+        
+        try {
+            packet.setDestination(ip);
+            packet.setDestinationPort(port);
+            packet.setMessage(message);        
+            server.send(packet);
+        } catch (NoRouteToHostException e) {
+            changeGateway();
+            sendMessage();
+        } catch (IOException ex) {
+            System.out.println("Erro ao enviar mensagem: "+ex.getMessage());
+        }
+        
+    }
+    
+    private void changeGateway() {
+        
+        String gw = JOptionPane
+                .showInputDialog("Por favor, insira o endereço do Gateway e "
+                        + "a porta, separados por ':'");
+        
+        try {
+            server.setGateway(new Host(gw));
+            lblGw.setText(gw);
+        } catch (UnknownHostException ex) {
+            JOptionPane.showMessageDialog(null, "Endereço não encontrado");
+        }
         
     }
 }

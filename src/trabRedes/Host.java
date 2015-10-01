@@ -6,6 +6,7 @@
 package trabRedes;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  *
@@ -16,6 +17,14 @@ public class Host {
     private InetAddress address;
     private int port;
 
+    public Host(String address) throws UnknownHostException {
+        
+        String[] gw = address.split(":");
+        this.address = InetAddress.getByName(gw[0]);
+        this.port = Integer.parseInt(gw[1]);
+        
+    }
+    
     public Host(InetAddress address, int port) {
         this.address = address;
         this.port = port;
