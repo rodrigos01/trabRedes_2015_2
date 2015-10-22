@@ -307,6 +307,9 @@ public class MessengerView extends javax.swing.JFrame implements Server.ServerLi
     public void onPacketReceived(Packet packet) {
         
         PacketTableModel model = (PacketTableModel) jTable1.getModel();
+        if(!packet.checkChecksum())
+            JOptionPane.showMessageDialog(null, "Packet received with error.");
+        else
         model.add(packet);        
         
     }
