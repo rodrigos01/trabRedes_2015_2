@@ -8,6 +8,10 @@ package trabRedes;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -18,6 +22,7 @@ public class Packet implements Serializable {
     private InetAddress source, destination;
     private int sourcePort, destinationPort;
     private String message;
+    private byte[] checksum;
 
     public InetAddress getSource() {
         return source;
@@ -67,7 +72,22 @@ public class Packet implements Serializable {
         this.message = message;
     }
     
+    public boolean checkChecksum() {
+        return checksum == calculateChecksum();
+    }
     
+    public void setChecksum() {
+        checksum = calculateChecksum();
+    }
+    
+    public byte[] calculateChecksum() {
+        try {
+            return MessageDigest.getInstance("MD5").digest(message.getBytes());            
+        } catch (NoSuchAlgorithmException ex) {
+            Logger.getLogger(Packet.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
     
     
 }

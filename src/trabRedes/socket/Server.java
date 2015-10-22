@@ -123,6 +123,7 @@ public class Server extends DatagramSocket implements Runnable {
     
     public void send(Packet data) throws IOException {
         
+        data.setChecksum();
         ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
         ObjectOutputStream outStream = new ObjectOutputStream(byteOutput);
         outStream.writeObject(data);
